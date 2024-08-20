@@ -1,0 +1,3 @@
+registry es una imagen para publicar imagenes, aca se utiliza de manera local
+
+docker push "nombre de la imagen"
