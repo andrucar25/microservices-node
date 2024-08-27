@@ -1,4 +1,4 @@
-FROM node:alpine3.18
+FROM node:alpine3.18 as builder
 
 ARG BASE_DIR
 
@@ -10,6 +10,14 @@ RUN npm install
 
 COPY ${BASE_DIR}/. .
 
-RUN npm
+RUN npm run build
 
-CMD ["npm", "start"]
+FROM node:alpine3.18
+
+WORKDIR /app
+
+COPY --from=builder /build/dist ./dist
+COPY --from=builder /build/node_modules ./node_modules
+COPY --from=builder /build/package.json ./package.json
+
+CMD ["npm", "run", "start"]
