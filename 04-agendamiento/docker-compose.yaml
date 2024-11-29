@@ -1,0 +1,173 @@
+version: "3.8"
+
+services:
+  mysql-server:
+    image: mysql:8
+    container_name: mysql-server
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: course
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+    volumes:
+      - vol-course-mysql-server:/var/lib/mysql
+    networks:
+      - net-course
+
+  mysql-client:
+    image: phpmyadmin:5
+    container_name: mysql-client
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_ARBITRARY=1
+    networks:
+      - net-course
+
+  redis-server:
+    image: redis:6.0.5-alpine
+    container_name: redis-server
+    command: redis-server --requirepass TOP_SECRET
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - net-course
+
+  redis-client:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-client
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOST=redis-server
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=TOP_SECRET
+    depends_on:
+      - redis-server
+    networks:
+      - net-course
+
+  rabbitmq:
+    image: rabbitmq:management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - net-course
+
+  gateway:
+    build:
+      context: ./
+      dockerfile: 00-gateway/Dockerfile #va a buscar el archivo Dockerfile en la carpeta 00-gateway
+      args:
+        - BASE_DIR=00-gateway
+    container_name: gateway
+    restart: always
+    environment:
+      - APPLICATION_PORT=3020
+      - SERVICE_AUTH_LOGIN=http://auth:3010/auth/login
+      - SERVICE_AUTH_VALIDATE_TOKEN=http://auth:3010/auth/validate-token
+      - SERVICE_USER_LIST=http://user:3000/user
+      - SERVICE_APPOINTMENT=http://appointment:3030/appointment
+    ports:
+      - "3020:3020"
+    networks:
+      - net-course
+
+  auth:
+    build:
+      context: ./
+      dockerfile: 01-auth/Dockerfile
+      args:
+        - BASE_DIR=01-auth
+    container_name: auth
+    restart: always
+    environment:
+      - APPLICATION_PORT=3010
+      - SERVICE_USER_BY_EMAIL=http://user:3000/user/user-by-email
+      - TOKEN_SECRET=c270f3c2-ad37-4148-a7cb-12a21f886cdb
+    ports:
+      - "3010:3010"
+    networks:
+      - net-course
+
+  user:
+    build:
+      context: ./
+      dockerfile: 02-user/Dockerfile
+      args:
+        - BASE_DIR=02-user
+    container_name: user
+    restart: always
+    environment:
+      - APPLICATION_PORT=3000
+      - MYSQL_HOST=mysql-server
+      - MYSQL_PORT=3306
+      - MYSQL_USERNAME=test
+      - MYSQL_PASSWORD=test
+      - MYSQL_DATABASE=course
+      - MYSQL_SYNCHRONIZE=true
+      - MYSQL_POOL_SIZE=10
+      - MYSQL_LOGGING=true
+      - MYSQL_ENTITIES=dist/**/infrastructure/**/*.entity.js
+      - MYSQL_MAX_QUERY_EXECUTION_TIME=10000
+      - REDIS_HOST=redis-server
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=TOP_SECRET
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mysql-server
+      - redis-server
+    networks:
+      - net-course
+
+  appointment:
+    build:
+      context: ./
+      dockerfile: 03-appointment/Dockerfile
+      args:
+        - BASE_DIR=03-appointment
+    container_name: appointment
+    restart: always
+    environment:
+      - APPLICATION_PORT=3030
+      - MYSQL_HOST=mysql-server
+      - MYSQL_PORT=3306
+      - MYSQL_USERNAME=test
+      - MYSQL_PASSWORD=test
+      - MYSQL_DATABASE=course
+      - MYSQL_SYNCHRONIZE=true
+      - MYSQL_POOL_SIZE=10
+      - MYSQL_LOGGING=true
+      - MYSQL_ENTITIES=dist/**/infrastructure/**/*.entity.js
+      - MYSQL_MAX_QUERY_EXECUTION_TIME=10000
+      - REDIS_HOST=redis-server
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=TOP_SECRET
+      - RABBIT_HOST=rabbitmq:5672
+      - EXCHANGE_NAME=course
+      - EXCHANGE_NAME_ERROR=exchange-error
+      - EXCHANGE_TYPE=direct
+    ports:
+      - "3030:3030"
+    depends_on:
+      - mysql-server
+      - redis-server
+      - rabbitmq
+    networks:
+      - net-course
+
+
+volumes:
+  vol-course-mysql-server:
+
+networks:
+  net-course:
+    driver: bridge
