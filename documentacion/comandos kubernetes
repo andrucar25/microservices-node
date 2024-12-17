@@ -1,0 +1,30 @@
+la minima unidad en kubernetes es el pod. pod es un conjunto de contenedores
+
+-tener iniciado minikube
+minikube start
+
+-crear un servidor en kubernetes
+ kubectl run server-web --image nginx:alpine
+ esto lo que hace es enviar instrucciones al api server dentro del cluster, el api server envia los comandos a scheduler controller que es el que va a ejecutar los comandos de la terminal y ademas gestiona la capacidad de los nodos para crear el pod. Si no encuentra espacio en ninguno de los nodos entonces pasa esa tarea a una lista de pendientes para despues volver a intentar crearlo
+ 
+ el node controller que se encarga de gestionar los nodos, por ejemplo puede indicar que el cluster tenga 3 nodos. Si alguno de los nodos deja de funcionar entonces lo destruye y lo vuelve a crear.
+ 
+ el replica controller puede hacer que la aplicacion este puesta en mas de un pod. por ejemplo hacer que este funcionando en 4 podes. si el pod falla entonces lo destruye y lo vuelve a crear
+ 
+ el deployment controller se encarga de manipular cuando ha habido una actualizacion en el codigo
+
+el endpoint controller es saber los ip de los podes y servidores 
+
+toda la informacion se guarda en la base de datos de kubernetes
+ 
+ 
+-acceder a el pod creado 
+ kubectl port-forward server-web 7000:80
+donde 7000 es el puerto que se expone para acceder y 80 es el puerto del pod creado en kubernetes
+
+kubtl version
+
+kubectl api-resources: los elementos que tiene kubernetes
+
+-crear un pod a partir de un manifiesto (un .yaml)
+kubectl apply -f 01-pod.yaml
