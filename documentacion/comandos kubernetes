@@ -13,7 +13,7 @@ minikube start
  
  el deployment controller se encarga de manipular cuando ha habido una actualizacion en el codigo
 
-el endpoint controller es saber los ip de los podes y servidores 
+el endpoint controller es saber los ip de los pods y servidores 
 
 toda la informacion se guarda en la base de datos de kubernetes
  
@@ -28,3 +28,24 @@ kubectl api-resources: los elementos que tiene kubernetes
 
 -crear un pod a partir de un manifiesto (un .yaml)
 kubectl apply -f 01-pod.yaml
+
+-borrar un pod
+kubectl delete po "nombre del pod"
+
+-para exponer y acceder el puerto de un contenedor a traves de un pod, ya que el pod aisla la conexiones 
+kubectl port-forward "nombre del pod" "puerto a exponer":"puerto del contenedor"
+ejemplo: kubectl port-forward server-nginx 7000:80
+
+----------------------------------------------------------
+en cada nodo existe:
+
+kubelet: es un agente (programa instalado dentro del nodo). Este crea contenedores y comunica al cluster cuando un contenedor ha fallado
+
+kube-proxy: es un agente. Da soporte de redes a los contenedores (asignar IP, una mascara, etc).
+
+container runtime: es el que dice que tipo de contenedores va a tener, por defecto esta docker
+
+----------------------------------------------------------
+los servicios no crean pods, lo que hace es buscar pods.
+LOs servicio sde tipo clusterIP son internos, no se puede acceder a ellos desde afuera
+

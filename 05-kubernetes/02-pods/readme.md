@@ -38,6 +38,12 @@ kubectl logs <nombre del pod>
 kubectl delete po <nombre del pod>
 ```
 
+### Para crear un pod a partir de un manifiesto (un .yaml)
+
+```
+kubectl apply -f <nombre del pod>
+```
+
 ### Para eliminar desde un manifiesto
 
 ```
@@ -48,4 +54,10 @@ kubectl delete -f <nombre del manifiesto>
 
 ```
 kubectl logs <nombre del pod> -c <nombre del contenedor>
+```
+
+### Para exponer y acceder el puerto de un contenedor a traves de un pod, ya que el pod aisla la conexiones. Ejemplo: kubectl port-forward server-nginx 7000:80 
+
+```
+kubectl port-forward <nombre del pod> "puerto a exponer":"puerto del contenedor"
 ```
